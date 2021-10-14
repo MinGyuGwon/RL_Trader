@@ -75,7 +75,7 @@ class DNN(Network):
             output = self.shared_network.output
         # 추가로 Dense Layer 쌓기
         output = Dense(
-            self.output_dim, activation=self.activation, 
+            self.output_dim, activation=self.activation,  # 32차원에서 3차원으로
             kernel_initializer='random_normal')(output)  # kernel_initializer : 가중치 초기화
         self.model = Model(inp, output)
         self.model.compile(

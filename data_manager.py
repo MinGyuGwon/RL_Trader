@@ -114,7 +114,7 @@ def load_data(code, date_from, date_to, ver='v2'):
 
     header = None if ver == 'v1' else 0
     data = pd.read_csv(
-        os.path.join(settings.BASE_DIR, 'data\{}\{}.csv'.format(ver, code)), 
+        os.path.join(settings.BASE_DIR, 'data\{}\{}.csv'.format(ver, code)), # os.path.join(settings.BASE_DIR, 'data',ver,'{}.csv'.format(code)),로 수정
         thousands=',', header=header, converters={'date': lambda x: str(x)}) ##> format(args.ver,-> format(ver,  ##> stock_code->code
 
     if ver == 'v1':

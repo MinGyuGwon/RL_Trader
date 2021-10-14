@@ -11,26 +11,28 @@ import data_manager
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--stock_code', nargs='+', default=['051910']) ##< default
+    parser.add_argument('--stock_code', nargs='+', default=['051910']) ##< default 
+    #{005380: "현대차", 005930: " 삼성전자", 015760:"한국전력", 035420:"네이버", 051910: "LG화학", 068270: "셀트리온"}
     parser.add_argument('--ver', choices=['v1', 'v2', 'v3'], default='v2') ##< default='v3'
     parser.add_argument('--rl_method', choices=['dqn', 'pg', 'ac', 'a2c', 'a3c', 'monkey'], default='dqn') ##< default='dqn'
     parser.add_argument('--net', choices=['dnn', 'lstm', 'cnn', 'monkey'], default='dnn')
     parser.add_argument('--num_steps', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--discount_factor', type=float, default=0.9)
+    parser.add_argument('--discount_factor', type=float, default=0.95) # 수정 
     parser.add_argument('--start_epsilon', type=float, default=0)
-    parser.add_argument('--balance', type=int, default=10000000)
-    parser.add_argument('--num_epoches', type=int, default=100)
+    parser.add_argument('--balance', type=int, default=1000000000) # 10억 설정
+    parser.add_argument('--num_epoches', type=int, default=100000) #  10만 Epoch
     parser.add_argument('--backend', choices=['tensorflow', 'plaidml'], default='tensorflow')
-    parser.add_argument('--output_name', default=utils.get_time_str())
-    parser.add_argument('--value_network_name')
+    parser.add_argument('--output_name', default=utils.get_time_str())  # 한국 시간대비 2시간 빠르다
+    parser.add_argument('--value_network_name') # 'parser.add_argument('--value_network_name')'은 None
     parser.add_argument('--policy_network_name')
     parser.add_argument('--reuse_models', action='store_true')
     parser.add_argument('--learning', action='store_true')
     parser.add_argument('--start_date', default='20170101')
     parser.add_argument('--end_date', default='20171231')
     args = parser.parse_args()
-
+    
+    
     # Keras Backend 설정
     if args.backend == 'tensorflow':
         os.environ['KERAS_BACKEND'] = 'tensorflow'
@@ -61,13 +63,15 @@ if __name__ == '__main__':
     from learners import ReinforcementLearner, DQNLearner, \
         PolicyGradientLearner, ActorCriticLearner, A2CLearner, A3CLearner
 
+  
     # 모델 경로 준비
     value_network_path = ''
     policy_network_path = ''
     if args.value_network_name is not None:
         value_network_path = os.path.join(settings.BASE_DIR, 'models/{}.h5'.format(args.value_network_name))
     else:
-        value_network_path = os.path.join(output_path, '{}_{}_{}_value.h5'.format(args.output_name, args.rl_method, args.net))
+        # args.value_network_name이 None인 경우 '20211014053010_dqn_dnn_value.h5'과 같이 저장 
+        value_network_path = os.path.join(output_path, '{}_{}_{}_value.h5'.format(args.output_name, args.rl_method, args.net)) 
     if args.policy_network_name is not None:
         policy_network_path = os.path.join(settings.BASE_DIR, 'models/{}.h5'.format(args.policy_network_name))
     else:
@@ -107,7 +111,7 @@ if __name__ == '__main__':
                 'max_trading_unit': max_trading_unit})
             if args.rl_method == 'dqn':
                 learner = DQNLearner(**{**common_params, 
-                'value_network_path': value_network_path})
+                'value_network_path': value_network_path})  
             elif args.rl_method == 'pg':
                 learner = PolicyGradientLearner(**{**common_params, 
                 'policy_network_path': policy_network_path})
@@ -126,7 +130,8 @@ if __name__ == '__main__':
                 args.start_epsilon = 1
                 args.learning = False
                 learner = ReinforcementLearner(**common_params)
-            if learner is not None:
+            # 앞선 if, elif문을 통해 생성된 learner 객체를 통해 학습 진행 
+            if learner is not None: 
                 learner.run(learning=args.learning)
                 learner.save_models()
         else:
@@ -148,4 +153,3 @@ if __name__ == '__main__':
             'policy_network_path': policy_network_path})
         learner.run(learning=args.learning)
         learner.save_models()
-        

@@ -221,7 +221,7 @@ class ReinforcementLearner:
     # 핵심
     def run(self, learning=True):
         # 제목
-        nfo = (
+        info = (
             "[{code}] RL:{rl} Net:{net} LR:{lr} "
             "DF:{discount_factor} TU:[{min_trading_unit},{max_trading_unit}]"
         ).format(
@@ -334,7 +334,7 @@ class ReinforcementLearner:
             num_epoches_digit = len(str(self.num_epoches))
             epoch_str = str(epoch + 1).rjust(num_epoches_digit, '0')  # 0을 왼쪽으로 붙임
             time_end_epoch = time.time()
-            elapsed_time_epoch = time_end_epoch - time_start_epoch
+            elapsed_time_epoch = time_end_epoch - time_start_epoch # 한 Epoch당 소요된 시간을 의미한다
             if self.learning_cnt > 0:
                 self.loss /= self.learning_cnt # 평균 내기
             logging.info("[{}][Epoch {}/{}] Epsilon:{:.4f} "
@@ -346,8 +346,7 @@ class ReinforcementLearner:
                     self.agent.num_buy, self.agent.num_sell, 
                     self.agent.num_hold, self.agent.num_stocks, 
                     self.agent.portfolio_value, self.learning_cnt, 
-                    self.loss, elapsed_time_epoch))
-
+                    self.loss, elapsed_time_epoch)  # ET는 elapsed_time_epoch을 의미
             # 에포크 관련 정보 가시화
             if self.num_epoches == 1 or (epoch + 1) % 10 == 0: # Epoch 10번마다 가시화
                 self.visualize(epoch_str, self.num_epoches, epsilon)
@@ -368,7 +367,7 @@ class ReinforcementLearner:
                 "Max PV:{max_pv:,.0f} #Win:{cnt_win}".format(
                 code=self.stock_code, elapsed_time=elapsed_time, 
                 max_pv=max_portfolio_value, cnt_win=epoch_win_cnt))
-
+    # main.py에서 실행됨
     def save_models(self):
         print(self.value_network_path)
         #print(self.policy_network_path)
@@ -376,7 +375,7 @@ class ReinforcementLearner:
             self.value_network.save_model(self.value_network_path)
         if self.policy_network is not None and self.policy_network_path is not None:
             self.policy_network.save_model(self.policy_network_path)
-+
+
     def predict(self, balance=10000000):
         # 에이전트 초기 자본금 설정
         self.agent.set_balance(balance)
@@ -564,9 +563,10 @@ class A3CLearner(ReinforcementLearner):
                 value_network=self.value_network,
                 policy_network=self.policy_network, **kwargs)
             self.learners.append(learner)
-
+    # main.py에서 실행됨
     def run(self, learning=True):
         threads = []
+        print(learners) # 추후 삭제할 것
         for learner in self.learners:
             threads.append(threading.Thread(
                 target=learner.run, daemon=True, kwargs={
