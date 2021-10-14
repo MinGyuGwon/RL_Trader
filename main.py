@@ -18,7 +18,9 @@ if __name__ == '__main__':
     parser.add_argument('--net', choices=['dnn', 'lstm', 'cnn', 'monkey'], default='dnn')
     parser.add_argument('--num_steps', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--discount_factor', type=float, default=0.95) # 수정 
+    parser.add_argument('--discount_factor', type=float, default=0.95) # 수정
+    # start_epsilon 은 별도로 run.(~, learning) learning 인자 값을 0으로 주지 않으면
+    # 디폴트 설정인 dqn dnn 설정에서는 쓰이지 않음
     parser.add_argument('--start_epsilon', type=float, default=0)
     parser.add_argument('--balance', type=int, default=1000000000) # 10억 설정
     parser.add_argument('--num_epoches', type=int, default=100000) #  10만 Epoch
@@ -103,6 +105,7 @@ if __name__ == '__main__':
 
         # 강화학습 시작
         learner = None
+        # args.rl_method가 'a3c'가 아니라면 실행되는 코드 블록
         if args.rl_method != 'a3c':
             common_params.update({'stock_code': stock_code,
                 'chart_data': chart_data, 

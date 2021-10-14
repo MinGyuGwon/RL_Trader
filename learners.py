@@ -219,6 +219,7 @@ class ReinforcementLearner:
             'epoch_summary_{}.png'.format(epoch_str))
         )
     # 핵심
+    # main.py에서 실행됨
     def run(self, learning=True):
         # 제목
         info = (
@@ -271,9 +272,11 @@ class ReinforcementLearner:
             self.reset()
 
             # 학습을 진행할 수록 탐험 비율 감소
-            if learning:
+            if learning: # default로 실행됨
+                print("실행됨? ")
                 epsilon = 10 / (epoch + 10) if epoch < self.num_epoches - 1 else 0
-                self.agent.reset_exploration() # exploration_base를 새로 정함
+                # def reset_exploration(self, alpha=None):
+                self.agent.reset_exploration() # alpha 값이 주어지지 않았으므로, exploration_base가 0.5로 초기화
             else:
                 epsilon = self.start_epsilon
                 self.agent.reset_exploration(alpha=0) # 책에는 없었으나 새로 생긴 부분 
@@ -563,7 +566,6 @@ class A3CLearner(ReinforcementLearner):
                 value_network=self.value_network,
                 policy_network=self.policy_network, **kwargs)
             self.learners.append(learner)
-    # main.py에서 실행됨
     def run(self, learning=True):
         threads = []
         print(learners) # 추후 삭제할 것
