@@ -9,7 +9,7 @@ if os.environ['KERAS_BACKEND'] == 'tensorflow':
         BatchNormalization, Dropout, MaxPooling2D, Flatten
     from tensorflow.keras.optimizers import SGD
     import tensorflow as tf
-    tf.compat.v1.disable_v2_behavior()
+    tf.compat.v1.disable_v2_behavior() # A3C 사용시에 comment out 시켜야함
     print('Eager Mode: {}'.format(tf.executing_eagerly()))
 elif os.environ['KERAS_BACKEND'] == 'plaidml.keras.backend':
     from keras.models import Model

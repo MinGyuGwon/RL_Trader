@@ -23,13 +23,13 @@ if __name__ == '__main__':
     # 디폴트 설정인 dqn dnn 설정에서는 쓰이지 않음
     parser.add_argument('--start_epsilon', type=float, default=0)
     parser.add_argument('--balance', type=int, default=1000000000) # 10억 설정
-    parser.add_argument('--num_epoches', type=int, default=100000) #  10만 Epoch
+    parser.add_argument('--num_epoches', type=int, default=1000) #  10만 Epoch
     parser.add_argument('--backend', choices=['tensorflow', 'plaidml'], default='tensorflow')
     parser.add_argument('--output_name', default=utils.get_time_str())  # 한국 시간대비 2시간 빠르다
     parser.add_argument('--value_network_name') # 'parser.add_argument('--value_network_name')'은 None
     parser.add_argument('--policy_network_name')
     parser.add_argument('--reuse_models', action='store_true')
-    parser.add_argument('--learning', action='store_true')
+    parser.add_argument('--learning', action='store_false') #
     parser.add_argument('--start_date', default='20170101')
     parser.add_argument('--end_date', default='20171231')
     args = parser.parse_args()
@@ -90,10 +90,10 @@ if __name__ == '__main__':
         # 차트 데이터, 학습 데이터 준비
         print(stock_code)
         chart_data, training_data = data_manager.load_data(
-            stock_code, args.start_date, args.end_date, ver=args.ver)
+            stock_code, args.start_date, args.end_date, ver=args.ver) # args.ver은 2가 기본
         
         # 최소/최대 투자 단위 설정
-        min_trading_unit = max(int(100000 / chart_data.iloc[-1,:]['close']), 1)
+        min_trading_unit = max(int(100000 / chart_data.iloc[-1,:]['close']), 1) # 마지막 '행'의 모든 '열'의 데이터 중에서 ['close'] 열의 값
         max_trading_unit = max(int(1000000 / chart_data.iloc[-1,:]['close']), 1)
         
         # 공통 파라미터 설정

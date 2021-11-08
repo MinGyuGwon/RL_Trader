@@ -156,6 +156,7 @@ class ReinforcementLearner:
         self.batch_size = 0
         self.learning_cnt = 0
 
+
     def build_sample(self):
         self.environment.observe()
         if len(self.training_data) > self.training_data_idx + 1:
@@ -197,6 +198,7 @@ class ReinforcementLearner:
         # action이 없는 num_steps 동안, 주식을 사지 않았으므로, 0으로 채워준다.
         self.memory_num_stocks = [0] * (self.num_steps - 1) + self.memory_num_stocks
         if self.value_network is not None:
+            # (Default 설정 기준으로), 빈 List가 할당된다.
             self.memory_value = [np.array([np.nan] * len(Agent.ACTIONS))] * (self.num_steps - 1) + self.memory_value
         if self.policy_network is not None:
             self.memory_policy = [np.array([np.nan] * len(Agent.ACTIONS))] * (self.num_steps - 1) + self.memory_policy
@@ -273,7 +275,6 @@ class ReinforcementLearner:
 
             # 학습을 진행할 수록 탐험 비율 감소
             if learning: # default로 실행됨
-                print("실행됨? ")
                 epsilon = 10 / (epoch + 10) if epoch < self.num_epoches - 1 else 0
                 # def reset_exploration(self, alpha=None):
                 self.agent.reset_exploration() # alpha 값이 주어지지 않았으므로, exploration_base가 0.5로 초기화
@@ -282,15 +283,26 @@ class ReinforcementLearner:
                 self.agent.reset_exploration(alpha=0) # 책에는 없었으나 새로 생긴 부분 
             # (1) ~ (2)까지 책에는 없었으나 추가된 내용
             # (1)
-            for i in tqdm(range(len(self.training_data))):
+            # Default 기준, self.training_data 크기는 (243, 29)
+            # training_data는 data_manager의 load_data()와 관련
+            # Default 기준, COLUMNS_TRAINING_DATA_V2에 해당하는 26개 colum들 데이터를 반환
+            # Default 설정 기준, 한 epoch 마다 39번 반복된다
+            for i in tqdm(range(len(self.training_data))): # 날짜의 개수만큼 반복
                 # 샘플 생성
+                # 'self'는 'ReinforcementLearner' 객체를 의미한다
                 next_sample = self.build_sample() # 29차원, Training_data의 Column들과 agent_state의 dimensions
-                if next_sample is None:
+                # build_sample()은 ReinforcementLearner 클래스의 메소드 중 하나
+                # build_sample() 메소드는 training_data(dataframe으로 구성) 중 다음 training_data_idx에 해당하는 행(row)의 데이터에 get_states() 메소드에서 반환하는 값을 합쳐서 반환
+                if next_sample is None: # 끝까지 가면
                     break
 
                 # num_steps만큼 샘플 저장
-                q_sample.append(next_sample) # 날짜별, 29차원 feature들
-                if len(q_sample) < self.num_steps:  #???
+                q_sample.append(next_sample) # 날짜별, 29차원 feature들로 구성된 List
+
+                # 다음 조건문은 q_sample이 비어있을 때
+                # 즉, bulid_sample을 할 수 없을 때
+                # 다시 말해서, self.training_data가 비어있을 때 실행된다.
+                if len(q_sample) < self.num_steps: # default 설정 기준, self.num_steps는 '1'이다
                     continue
             # (2)
                 # 가치, 정책 신경망 예측
@@ -302,20 +314,25 @@ class ReinforcementLearner:
                     pred_policy = self.policy_network.predict(list(q_sample))
                 
                 # 신경망 또는 탐험에 의한 행동 결정
-                action, confidence, exploration = self.agent.decide_action(pred_value, pred_policy, epsilon)
+                # DQN,DNN 기준으로 pred_value와 pred_policy는 None
+                # 따라서, confidence 역시 0.5로 주어짐
+                action, confidence, exploration = self.agent.decide_action(pred_value, pred_policy, epsilon) # action, confidence, exploration(탐험인지 아닌지, Boolean) 반환
 
                 # 결정한 행동을 수행하고 즉시 보상과 지연 보상 획득
                 '''
                 책 원래 내용은 
                 immediate_reward, delayed_reward = self.agent.act(action, confidence)
                 '''
-                reward = self.agent.act(action, confidence) # self.profitloss에 해당한다 ###
+                # self.agent.act 내 validate_action(self, action) 실행 시, False(주식을 가지고 있지만, 파려고 하는 경우)가 나오면 Hold를 선택하는 비율이 높을 수 있다.
+                # reward가 self.profitloss이기 때문에, Hold를 하더라도,
+                # 초기 자본금 대비 수익률을 유지하는 경우라면, 양(+)의 보상으로 이해할 수 있다.
+                reward = self.agent.act(action, confidence) # self.profitloss에 해당한다
 
                 # 행동 및 행동에 대한 결과를 기억
-                self.memory_sample.append(list(q_sample))
+                self.memory_sample.append(list(q_sample)) # q_sample을 List로 만들어주는 것은 q_sample이 'deque'이라는 컨테이너 type이기 때문
                 self.memory_action.append(action)
                 self.memory_reward.append(reward)
-                if self.value_network is not None:
+                if self.value_network is not None: # (Default 설정 기준으로 init value_network에 의해 생성된) DNN객체로, 현재 조건문이
                     self.memory_value.append(pred_value)
                 if self.policy_network is not None:
                     self.memory_policy.append(pred_policy)
@@ -331,6 +348,7 @@ class ReinforcementLearner:
 
             # 에포크 종료 후 학습
             if learning:
+                # self는 ReinforcementLearner 객체
                 self.fit() # 신경망 학습
 
             # 에포크 관련 정보 로그 기록
@@ -423,23 +441,26 @@ class DQNLearner(ReinforcementLearner):
         self.value_network_path = value_network_path
         self.init_value_network()
 
-    def get_batch(self):  ### ???
+    def get_batch(self):  ###
         memory = zip(
-            reversed(self.memory_sample),
-            reversed(self.memory_action),
-            reversed(self.memory_value),
-            reversed(self.memory_reward),
+            reversed(self.memory_sample), # 메모리 샘플의 크기는 '날짜의 개수'만큼
+            reversed(self.memory_action), # 각 날짜별로 선택한 액션
+            reversed(self.memory_value),  # 'memory_value'는 각 액션의 확률
+            reversed(self.memory_reward), # agent.act() 메소드의 결과로,
         )
-        x = np.zeros((len(self.memory_sample), self.num_steps, self.num_features))
-        y_value = np.zeros((len(self.memory_sample), self.agent.NUM_ACTIONS))
+        x = np.zeros((len(self.memory_sample), self.num_steps, self.num_features)) # num_steps=1 기준,(243,1,29
+        y_value = np.zeros((len(self.memory_sample), self.agent.NUM_ACTIONS))      # num_steps=1 기준, (243,3)
         value_max_next = 0
-        for i, (sample, action, value, reward) in enumerate(memory):
+        for i, (sample, action, value, reward) in enumerate(memory): # Default 기준으로, i는 0~242 나온다.
+            # sample, action, value, reward
             x[i] = sample
             # r이 즉시 보상
             r = self.memory_reward[-1] - reward # reward는 profitloss(initial_balance 대비 portfolio 가치 비율)로, self.agent.act(action, confidence)의 결과이다
             y_value[i] = value    # pred_value 값에 해당, 각 액션별 가치 예측값
             y_value[i, action] = r + self.discount_factor * value_max_next # 매 스텝 별 최적 가치 업데이트
             value_max_next = value.max()
+            # sample, action, value, reward
+
         return x, y_value, None
 
 
@@ -568,7 +589,6 @@ class A3CLearner(ReinforcementLearner):
             self.learners.append(learner)
     def run(self, learning=True):
         threads = []
-        print(learners) # 추후 삭제할 것
         for learner in self.learners:
             threads.append(threading.Thread(
                 target=learner.run, daemon=True, kwargs={

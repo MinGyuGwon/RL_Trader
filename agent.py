@@ -79,9 +79,9 @@ class Agent:
             self.portfolio_value / self.base_portfolio_value  
         )
         return (
-            self.ratio_hold,
-            self.ratio_portfolio_value,
-            (self.environment.get_price() / self.avg_buy_price) - 1 if self.avg_buy_price > 0 else 0
+            self.ratio_hold, # 현재의 가격으로 소유할 수 있는 주식의 개수 중 소유한 주식 수의 비율
+            self.ratio_portfolio_value, # 초기 자본금 대비 포트폴리오의 가치 비율
+            (self.environment.get_price() / self.avg_buy_price) - 1 if self.avg_buy_price > 0 else 0 # 평균 매입가 대비 현재의 주식 가치의 '증감' 비율
         )
 
     def decide_action(self, pred_value, pred_policy, epsilon):
@@ -101,13 +101,13 @@ class Agent:
                 epsilon = 1  # 모든 정책의 확률이 같은 경우에도 탐험을 해라~
 
         # 탐험 결정
-        if np.random.rand() < epsilon:
+        if np.random.rand() < epsilon: # 탐험을 하는 경우
             exploration = True
             if np.random.rand() < self.exploration_base:
                 action = self.ACTION_BUY
             else:
                 action = np.random.randint(self.NUM_ACTIONS - 1) + 1  # 관망이나 매도
-        else:
+        else: # 탐험을 하지 않는 경우
             exploration = False
             action = np.argmax(pred)  
 
@@ -134,7 +134,7 @@ class Agent:
     def decide_trading_unit(self, confidence):
         if np.isnan(confidence):
             return self.min_trading_unit
-        added_traiding = max(min(
+        added_traiding = max(min(   # min은 쓸 필요 없지 않나, 어차피 confidence가 1을 넘어갈리가 없는데?
             int(confidence * (self.max_trading_unit - 
                 self.min_trading_unit)),
             self.max_trading_unit-self.min_trading_unit
